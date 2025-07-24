@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:latest
+    container_name: db
+    ports:
+      - "5432:5432"
+    restart: always
+    environment:
+      POSTGRES_USER: docker
+      POSTGRES_PASSWORD: docker
+      POSTGRES_DB: db
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/create_tables.sql
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_USER: docker
+      DB_PASSWORD: docker
+      DB_NAME: db
+    volumes:
+      - .:/app
+    command: python3 src/load_to_postgres.py
+
+  adminer:
+    image: adminer:latest
+    restart: always
+    depends_on:
+      - db
+    ports:
+      - 8080:8080

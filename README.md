@@ -74,6 +74,65 @@ Results are ranked + displayed via a UI
 
 ---
 
+## 🗃️ Database Schema Design
+
+To support both **semantic search** (via vector embeddings) and **structured filtering** (via SQL), this project uses a carefully designed PostgreSQL schema centered on a single `products` table.
+
+### 🎯 Design Goals
+
+The schema is optimized to:
+
+- Enable **joins** between structured data and vector search results via `product_id`
+- Support **filtering** by key attributes like price, gender, and color
+- Store metadata needed for **displaying relevant results**
+- Stay flexible and clean for production-scale querying
+
+---
+
+### 🧱 Table: `products`
+
+| Column          | Type     | Purpose                                      |
+|-----------------|----------|----------------------------------------------|
+| `product_id`     | INTEGER  | Primary key; used to join with vector DB     |
+| `product_name`   | TEXT     | Display title for results                    |
+| `product_brand`  | TEXT     | Useful for filtering or grouping             |
+| `gender`         | TEXT     | Common filter (Men, Women, Unisex)           |
+| `price_inr`      | INTEGER  | Used for price filtering or sorting          |
+| `description`    | TEXT     | Unstructured text used to generate embeddings|
+| `primary_color`  | TEXT     | Optional structured filter                   |
+
+---
+
+### ⚙️ Why This Works
+
+- ✅ **Simplicity**: Single-table design keeps queries fast and easy to debug  
+- ✅ **Searchable**: All common filters (gender, color, price) are first-class columns  
+- ✅ **Compatible**: `product_id` links to semantic search results from FAISS   
+- ✅ **Ready for Production**: Schema avoids unnecessary complexity (e.g., joins for color/brand)  
+
+---
+
+### 🧠 Example Use Case
+
+When a user enters:
+
+> “Stylish red jackets under INR 3000 for women”
+
+The app:
+
+1. Embeds the query and performs a **nearest-neighbor search** on the vector database  
+2. Retrieves the top matching `product_id`s  
+3. Filters those using SQL:
+
+```sql
+SELECT * FROM products
+WHERE product_id IN (...)
+  AND gender = 'Women'
+  AND primary_color = 'Red'
+  AND price_inr <= 3000;
+
+---
+
 ## 🧪 Features
 
 - ✅ ETL pipeline to clean and load structured product data into PostgreSQL
