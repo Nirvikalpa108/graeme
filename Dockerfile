@@ -10,4 +10,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Run the script
-CMD ["python", "src/test.py"]
+CMD ["python3", "src/load_to_postgres.py"]

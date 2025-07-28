@@ -4,6 +4,7 @@ CREATE TABLE products (
     product_brand  TEXT,
     gender         TEXT,
     price_inr      INTEGER,
+    num_images     INTEGER, 
     description    TEXT,
     primary_color  TEXT
 );

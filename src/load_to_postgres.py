@@ -5,6 +5,10 @@ from psycopg2.extensions import register_adapter, AsIs
 from clean_data import clean_raw_csv
 import os
 import time
+from dotenv import load_dotenv
+
+load_dotenv()
+print("🚀 Starting load_to_postgres.py")
 
 register_adapter(np.int64, AsIs)
 register_adapter(np.int32, AsIs)
@@ -18,16 +22,20 @@ conn = psycopg2.connect(
     user=os.getenv("DB_USER"),
     password=os.getenv("DB_PASSWORD"),
     host=os.getenv("DB_HOST"),
-    port=5432
+    port=int(os.getenv("DB_PORT"))
 )
 cursor = conn.cursor()
 
 df = clean_raw_csv("data/myntra_products_catalog.csv")
+print(f"✅ Loaded CSV with {len(df)} rows")
+
 
 for _, row in df.iterrows():
     cursor.execute("""
-        INSERT INTO products (product_id, product_name, product_brand, gender, price_inr, description, primary_color)
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO products (
+            product_id, product_name, product_brand,
+            gender, price_inr, num_images, description, primary_color
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         ON CONFLICT (product_id) DO NOTHING;
     """, (
         int(row.product_id),
@@ -35,9 +43,11 @@ for _, row in df.iterrows():
         row.product_brand,
         row.gender,
         int(row.price_inr),
+        int(row.num_images),
         row.description,
         row.primary_color
     ))
+print("✅ Finished inserting rows into Postgres")
 
 conn.commit()
 cursor.close()
