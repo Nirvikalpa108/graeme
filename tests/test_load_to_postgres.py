@@ -2,8 +2,9 @@ import os
 import psycopg2
 import pytest
 from dotenv import load_dotenv
+
 # Load environment variables from .env
-load_dotenv(dotenv_path=".env.local", override=True)
+#load_dotenv(dotenv_path=".env.local", override=True)
 load_dotenv(dotenv_path=".env")
 
 @pytest.fixture(scope="module")

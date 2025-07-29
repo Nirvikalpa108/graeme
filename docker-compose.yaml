@@ -2,7 +2,7 @@ version: '3.9'
 
 services:
   db:
-    image: postgres:latest
+    image: ankane/pgvector:latest
     container_name: db
     ports:
       - "${DB_PORT}:5432"
@@ -39,7 +39,7 @@ services:
     env_file:
     - .env
     working_dir: /app
-    command: python3 src/load_to_postgres.py
+    command: ./entrypoint.sh
 
   adminer:
     image: adminer:latest
