@@ -62,6 +62,23 @@ def test_embedding_vector_dimensions(db_connection):
             assert isinstance(vec, np.ndarray)
             assert len(vec) == 384, f"Row {idx} has incorrect vector length: {len(vec)}"
 
+def test_generate_embedding_from_db_description(db_connection):
+    with db_connection.cursor() as cur:
+        cur.execute("SELECT product_id, description FROM products LIMIT 1;")
+        row = cur.fetchone()
+        assert row is not None, "No row returned from database"
+
+        product_id, description = row
+        assert description is not None and len(description) > 0, "Description is empty"
+
+        model = SentenceTransformer("all-MiniLM-L6-v2")
+        embedding = model.encode(description)
+
+        assert isinstance(embedding, np.ndarray), "Embedding is not a NumPy array"
+        assert embedding.shape[0] == 384, f"Expected embedding of size 384, got {embedding.shape[0]}"
+        assert np.any(embedding != 0), "Embedding is all zeros"
+        assert np.all(np.isfinite(embedding)), "Embedding contains NaN or Inf"
+
 def test_cosine_similarity_of_stored_embedding(db_connection):
     register_vector(db_connection)
 
