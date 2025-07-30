@@ -2,6 +2,8 @@ import os
 import psycopg2
 import pytest
 from dotenv import load_dotenv
+from pgvector.psycopg2 import register_vector
+import numpy as np
 
 #load_dotenv(dotenv_path=".env.local", override=True)
 load_dotenv(dotenv_path=".env")
@@ -50,9 +52,11 @@ def test_no_null_embeddings(db_connection):
         assert null_count == 0, f"Found {null_count} null embeddings"
 
 def test_embedding_vector_dimensions(db_connection):
+    register_vector(db_connection)
     with db_connection.cursor() as cur:
         cur.execute("SELECT embedding FROM product_embeddings LIMIT 5;")
         rows = cur.fetchall()
         for idx, row in enumerate(rows):
             vec = row[0]
+            assert isinstance(vec, np.ndarray)
             assert len(vec) == 384, f"Row {idx} has incorrect vector length: {len(vec)}"

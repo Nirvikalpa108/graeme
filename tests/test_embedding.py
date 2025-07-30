@@ -37,5 +37,3 @@ def test_generate_embedding_from_db_description(db_connection):
         assert embedding.shape[0] == 384, f"Expected embedding of size 384, got {embedding.shape[0]}"
         assert np.any(embedding != 0), "Embedding is all zeros"
         assert np.all(np.isfinite(embedding)), "Embedding contains NaN or Inf"
-
-        print(f"✅ Embedding test passed for product_id: {product_id}")

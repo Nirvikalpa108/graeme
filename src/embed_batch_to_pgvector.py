@@ -2,6 +2,7 @@ import os
 import time
 import psycopg2
 from psycopg2.extras import execute_batch
+from pgvector.psycopg2 import register_vector
 from sentence_transformers import SentenceTransformer
 from dotenv import load_dotenv
 
@@ -19,25 +20,28 @@ conn = psycopg2.connect(
     host=os.getenv("DB_HOST"),
     port=int(os.getenv("DB_PORT"))
 )
+
+# ✅ Register pgvector adapter
+register_vector(conn)
 cursor = conn.cursor()
 
 # Load model
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
-# Fetch all products
+# Fetch products with descriptions
 cursor.execute("SELECT product_id, description FROM products WHERE description IS NOT NULL;")
 rows = cursor.fetchall()
 print(f"📦 Fetched {len(rows)} rows")
 
-# Batch encode descriptions
+# Extract data
 product_ids = [row[0] for row in rows]
 descriptions = [row[1] for row in rows]
 
 print("🧠 Generating embeddings...")
 embeddings = model.encode(descriptions, batch_size=64, show_progress_bar=True)
 
-# Prepare data for batch insert
-data = [(pid, embedding.tolist()) for pid, embedding in zip(product_ids, embeddings)]
+# Batch insert embeddings using pgvector native support
+data = list(zip(product_ids, embeddings))  # embeddings are numpy arrays
 
 print("💾 Inserting into product_embeddings...")
 execute_batch(cursor, """

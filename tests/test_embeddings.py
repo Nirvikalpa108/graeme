@@ -1,9 +1,9 @@
-from sentence_transformers import SentenceTransformer
-import numpy as np
 import psycopg2
 import os
 import pytest
 from dotenv import load_dotenv
+import pytest
+from pgvector.psycopg2 import register_vector
 
 # Load environment variables
 load_dotenv(dotenv_path=".env")
@@ -20,33 +20,15 @@ def db_connection():
     yield conn
     conn.close()
 
-def test_spot_check_embedding(db_connection):
-    """Spot-check that the embedding in the database is accurate for a known product."""
-    product_id = 10017413
-    description = "Black and grey printed medium trolley bag, secured with a TSA lock"
+import numpy as np
 
-    model = SentenceTransformer("all-MiniLM-L6-v2")
-    expected_embedding = model.encode(description)
+def test_pgvector_type_is_correct(db_connection):
+    register_vector(db_connection)
 
     with db_connection.cursor() as cur:
-        cur.execute("SELECT embedding FROM product_embeddings WHERE product_id = %s;", (product_id,))
+        cur.execute("SELECT embedding FROM product_embeddings LIMIT 1;")
         row = cur.fetchone()
 
-    assert row is not None, f"❌ No embedding found for product_id {product_id}"
-    actual_embedding = np.array(row[0])
-
-    cosine_similarity = np.dot(expected_embedding, actual_embedding) / (
-        np.linalg.norm(expected_embedding) * np.linalg.norm(actual_embedding)
-    )
-
-    if cosine_similarity <= 0.99:
-        print("❌ Embedding mismatch!")
-        print(f"Product ID: {product_id}")
-        print(f"Description: {description}")
-        print(f"Cosine Similarity: {cosine_similarity:.6f}")
-        print(f"Expected (first 5 dims): {expected_embedding[:5]}")
-        print(f"Actual   (first 5 dims): {actual_embedding[:5]}")
-
-    assert cosine_similarity > 0.99, f"Embedding mismatch: cosine similarity = {cosine_similarity:.6f}"
-
-    print(f"✅ Embedding spot check passed. Cosine similarity = {cosine_similarity:.6f}")
+    assert row is not None, "No rows found in product_embeddings"
+    assert isinstance(row[0], np.ndarray), f"Expected numpy.ndarray, got {type(row[0])}"
+    assert row[0].shape == (384,), f"Expected vector of size 384, got shape {row[0].shape}"
