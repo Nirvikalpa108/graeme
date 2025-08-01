@@ -29,13 +29,6 @@ User enters: `"Red formal shoes under INR 3000"`
 
 ---
 
-## 🧱 Architecture Overview
-
-<pre> ```text +------------------+ | Kaggle Dataset | +--------+---------+ | [ETL: Pandas] | +------------v------------+ | PostgreSQL (SQL DB) | ← structured data +-------------------------+ | +------------+------------+ | SentenceTransformer | ← generate embeddings from descriptions +------------+------------+ | +------------v------------+ | pgvector / Postgres | ← vector search on embeddings +-------------------------+ | [Query Interface] | +------------v-------------+ | CLI / API / UI (TBD) | +--------------------------+ ``` </pre>
-
-
----
-
 ## 📚 Dataset
 
 - **Source**: [Fashion Clothing Products Catalog – Kaggle](https://www.kaggle.com/datasets/shivamb/fashion-clothing-products-catalog)
