@@ -1,161 +1,170 @@
 # 🛍️ Fashion Product Search Pipeline (ML Ops Portfolio Project)
 
-This project builds a **production-style ML Ops pipeline** that powers a hybrid **semantic + structured product search system** for an e-commerce use case.
+This project builds a **production-style MLOps pipeline** that powers a hybrid **semantic + structured product search system** for an e-commerce use case.
 
 ---
 
 ## 🔍 Problem Statement
 
-E-commerce platforms store rich structured data (e.g., product name, price, category) and unstructured data (e.g., descriptions, reviews, images). However, search functionality is often limited to keyword or filter-based systems, which fail to capture the **semantic meaning** behind user queries like:
+E-commerce platforms often rely on keyword search or basic filters, which fail to capture the **semantic meaning** of natural language queries like:
 
 > *“Show me stylish travel bags for women under INR 2000.”*
 
 This project solves that by:
-- Ingesting and processing structured and unstructured data
-- Creating embeddings from text descriptions using modern LLMs
-- Storing structured data in a SQL database and embeddings in a vector database
-- Allowing **natural language queries** that return semantically relevant, filterable results
+- Ingesting and processing structured and unstructured product data
+- Generating semantic embeddings from product descriptions
+- Storing structured data in **PostgreSQL** and embeddings using **pgvector**
+- Enabling hybrid retrieval using **natural language + structured filters**
+
+---
 
 ## 🧠 Example Query Flow
-User enters: "Red formal shoes under INR 3000"
 
-Query is embedded into a vector
+User enters: `"Red formal shoes under INR 3000"`
 
-Vector DB retrieves top 10 semantically similar products
-
-SQL DB filters for price, color, gender, etc.
-
-Results are ranked + displayed via a UI
+1. Query is embedded into a vector
+2. Vector DB retrieves top N similar products
+3. SQL DB filters by price, color, gender, etc.
+4. Ranked results are returned to the user
 
 ---
 
 ## 🧱 Architecture Overview
+# 🛍️ Fashion Product Search Pipeline (ML Ops Portfolio Project)
 
-        +------------------+
-        |  Kaggle Dataset  |
-        +--------+---------+
-                 |
-           [ETL: Pandas]
-                 |
-    +------------v------------+
-    |   PostgreSQL (SQL DB)   |  ← structured data
-    +-------------------------+
-                 |
-    +------------+------------+
-    |   SentenceTransformer   |  ← generate embeddings from descriptions
-    +------------+------------+
-                 |
-    +------------v------------+
-    |    FAISS / Qdrant DB    |  ← unstructured semantic data
-    +-------------------------+
-                 |
-         [Query Interface]
-                 |
-    +------------v-------------+
-    | Streamlit (or Flask App) |
-    +--------------------------+
+This project builds a **production-style MLOps pipeline** that powers a hybrid **semantic + structured product search system** for an e-commerce use case.
 
 ---
 
-## 🧾 Dataset
+## 🔍 Problem Statement
+
+E-commerce platforms often rely on keyword search or basic filters, which fail to capture the **semantic meaning** of natural language queries like:
+
+> *“Show me stylish travel bags for women under INR 2000.”*
+
+This project solves that by:
+- Ingesting and processing structured and unstructured product data
+- Generating semantic embeddings from product descriptions
+- Storing structured data in **PostgreSQL** and embeddings using **pgvector**
+- Enabling hybrid retrieval using **natural language + structured filters**
+
+---
+
+## 🧠 Example Query Flow
+
+User enters: `"Red formal shoes under INR 3000"`
+
+1. Query is embedded into a vector
+2. Vector DB retrieves top N similar products
+3. SQL DB filters by price, color, gender, etc.
+4. Ranked results are returned to the user
+
+---
+
+## 🧱 Architecture Overview
++------------------+
+| Kaggle Dataset |
++--------+---------+
+|
+[ETL: Pandas]
+|
++--------v---------+
+| PostgreSQL (DB) | ← structured data
+| + pgvector ext | ← vector embeddings
++--------+---------+
+|
++--------v---------+
+| SentenceTransformer | ← generate embeddings
++--------+---------+
+|
+[Similarity Search]
+|
++--------v---------+
+| API or CLI (coming soon) |
++------------------+
+
+---
+
+## 📚 Dataset
 
 - **Source**: [Fashion Clothing Products Catalog – Kaggle](https://www.kaggle.com/datasets/shivamb/fashion-clothing-products-catalog)
-- **Format**: CSV
-- **Fields Used**:
-  - `product_id`, `product_name`, `product_brand`, `gender`, `price_inr`, `description`, `primary_color`
+- **Fields Used**: `product_id`, `product_name`, `product_brand`, `gender`, `price_inr`, `description`, `primary_color`
 - **Size**: ~12,000 products
 
 ---
 
-## 🧠 Embedding Model
+## 🤖 Embedding Model
 
 - [`sentence-transformers/all-MiniLM-L6-v2`](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2)  
-  A lightweight transformer model for generating dense vector embeddings from product descriptions.
+  A compact transformer model used to generate dense vector embeddings from product descriptions (384 dimensions).
 
 ---
 
-## 🗃️ Database Schema Design
+## 🧾 Database Design
 
-To support both **semantic search** (via vector embeddings) and **structured filtering** (via SQL), this project uses a carefully designed PostgreSQL schema centered on a single `products` table.
+**Schema**
 
-### 🎯 Design Goals
+- `products` – structured metadata about each product
+- `product_embeddings` – semantic vector embeddings (stored using pgvector)
 
-The schema is optimized to:
-
-- Enable **joins** between structured data and vector search results via `product_id`
-- Support **filtering** by key attributes like price, gender, and color
-- Store metadata needed for **displaying relevant results**
-- Stay flexible and clean for production-scale querying
-
----
-
-### 🧱 Table: `products`
-
-| Column          | Type     | Purpose                                      |
-|-----------------|----------|----------------------------------------------|
-| `product_id`     | INTEGER  | Primary key; used to join with vector DB     |
-| `product_name`   | TEXT     | Display title for results                    |
-| `product_brand`  | TEXT     | Useful for filtering or grouping             |
-| `gender`         | TEXT     | Common filter (Men, Women, Unisex)           |
-| `price_inr`      | INTEGER  | Used for price filtering or sorting          |
-| `description`    | TEXT     | Unstructured text used to generate embeddings|
-| `primary_color`  | TEXT     | Optional structured filter                   |
-
----
-
-### ⚙️ Why This Works
-
-- ✅ **Simplicity**: Single-table design keeps queries fast and easy to debug  
-- ✅ **Searchable**: All common filters (gender, color, price) are first-class columns  
-- ✅ **Compatible**: `product_id` links to semantic search results from FAISS   
-- ✅ **Ready for Production**: Schema avoids unnecessary complexity (e.g., joins for color/brand)  
-
----
-
-### 🧠 Example Use Case
-
-When a user enters:
-
-> “Stylish red jackets under INR 3000 for women”
-
-The app:
-
-1. Embeds the query and performs a **nearest-neighbor search** on the vector database  
-2. Retrieves the top matching `product_id`s  
-3. Filters those using SQL:
-
-```sql
-SELECT * FROM products
-WHERE product_id IN (...)
-  AND gender = 'Women'
-  AND primary_color = 'Red'
-  AND price_inr <= 3000;
+**Why PostgreSQL + pgvector?**
+- Single, consistent database layer for both SQL filters and semantic search
+- Fully Dockerized and extensible with pgvector extension
+- Simpler than managing a separate vector DB
 
 ---
 
 ## 🧪 Features
 
-- ✅ ETL pipeline to clean and load structured product data into PostgreSQL
-- ✅ Embedding generation from unstructured `description` text
-- ✅ Vector DB for similarity search
-- ✅ Natural language query → vector search → SQL join → user results
-- ✅ Dockerized setup with `docker-compose`
-- ✅ Tests for data loading and transformation logic
-- ✅ Cloud deployment
+- ✅ Load and clean structured product data into PostgreSQL
+- ✅ Generate semantic embeddings from descriptions using SentenceTransformer
+- ✅ Store and query vector data using pgvector
+- ✅ Validate data and embedding logic with Pytest tests
+- ✅ Fully containerized with Docker + docker-compose
+- ✅ Logs and timing metrics for observability
+- ✅ Spot-check tests for embedding quality (cosine similarity)
+- 🔜 API and/or CLI interface for interactive queries
+- 🔜 Cloud deployment with AWS/GCP
 
 ---
 
-## 📦 Setup
+## 🛠️ Tech Stack
 
-### Requirements
-
-TBD
-
-### Run Locally
-
-TBD
+- **Python 3.11**
+- **PostgreSQL 17 + pgvector**
+- **Pandas, SentenceTransformers, NumPy**
+- **Docker & Docker Compose**
+- **pytest**
+- **dotenv** for environment configuration
 
 ---
 
-## 📜 License
-This project is for educational and portfolio use only. Data provided by Kaggle under Creative Commons.
+## 🚀 Setup Instructions
+
+### 🧰 Prerequisites
+
+- Docker & Docker Compose installed
+- (Optional) Python 3.11 + virtualenv for local dev/test
+
+### Clone the Repo
+
+```bash
+git clone https://github.com/Nirvikalpa108/graeme
+cd graeme
+```
+
+### Start the Pipeline with Docker
+`docker-compose up --build`
+This will:
+Start a PostgreSQL container with pgvector
+Run scripts to load and embed data
+Insert embeddings into the vector table
+Run integration tests and exit with success/failure status
+
+### Run Tests Manually (Optional)
+To re-run tests inside Docker:
+`docker-compose run --rm app pytest`
+
+### Stop & Clean Up
+This stops all containers and deletes volumes (DB data).
+`docker-compose down -v`
