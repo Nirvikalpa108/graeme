@@ -30,58 +30,9 @@ User enters: `"Red formal shoes under INR 3000"`
 ---
 
 ## 🧱 Architecture Overview
-# 🛍️ Fashion Product Search Pipeline (ML Ops Portfolio Project)
 
-This project builds a **production-style MLOps pipeline** that powers a hybrid **semantic + structured product search system** for an e-commerce use case.
+<pre> ```text +------------------+ | Kaggle Dataset | +--------+---------+ | [ETL: Pandas] | +------------v------------+ | PostgreSQL (SQL DB) | ← structured data +-------------------------+ | +------------+------------+ | SentenceTransformer | ← generate embeddings from descriptions +------------+------------+ | +------------v------------+ | pgvector / Postgres | ← vector search on embeddings +-------------------------+ | [Query Interface] | +------------v-------------+ | CLI / API / UI (TBD) | +--------------------------+ ``` </pre>
 
----
-
-## 🔍 Problem Statement
-
-E-commerce platforms often rely on keyword search or basic filters, which fail to capture the **semantic meaning** of natural language queries like:
-
-> *“Show me stylish travel bags for women under INR 2000.”*
-
-This project solves that by:
-- Ingesting and processing structured and unstructured product data
-- Generating semantic embeddings from product descriptions
-- Storing structured data in **PostgreSQL** and embeddings using **pgvector**
-- Enabling hybrid retrieval using **natural language + structured filters**
-
----
-
-## 🧠 Example Query Flow
-
-User enters: `"Red formal shoes under INR 3000"`
-
-1. Query is embedded into a vector
-2. Vector DB retrieves top N similar products
-3. SQL DB filters by price, color, gender, etc.
-4. Ranked results are returned to the user
-
----
-
-## 🧱 Architecture Overview
-+------------------+
-| Kaggle Dataset |
-+--------+---------+
-|
-[ETL: Pandas]
-|
-+--------v---------+
-| PostgreSQL (DB) | ← structured data
-| + pgvector ext | ← vector embeddings
-+--------+---------+
-|
-+--------v---------+
-| SentenceTransformer | ← generate embeddings
-+--------+---------+
-|
-[Similarity Search]
-|
-+--------v---------+
-| API or CLI (coming soon) |
-+------------------+
 
 ---
 
@@ -135,16 +86,9 @@ User enters: `"Red formal shoes under INR 3000"`
 - **Pandas, SentenceTransformers, NumPy**
 - **Docker & Docker Compose**
 - **pytest**
-- **dotenv** for environment configuration
-
 ---
 
 ## 🚀 Setup Instructions
-
-### 🧰 Prerequisites
-
-- Docker & Docker Compose installed
-- (Optional) Python 3.11 + virtualenv for local dev/test
 
 ### Clone the Repo
 
@@ -155,16 +99,19 @@ cd graeme
 
 ### Start the Pipeline with Docker
 `docker-compose up --build`
+
 This will:
-Start a PostgreSQL container with pgvector
-Run scripts to load and embed data
-Insert embeddings into the vector table
-Run integration tests and exit with success/failure status
+- Start a PostgreSQL container with pgvector
+- Run scripts to load and embed data
+- Insert embeddings into the vector table
+- Run integration tests and exit with success/failure status
 
 ### Run Tests Manually (Optional)
 To re-run tests inside Docker:
+
 `docker-compose run --rm app pytest`
 
 ### Stop & Clean Up
 This stops all containers and deletes volumes (DB data).
+
 `docker-compose down -v`
