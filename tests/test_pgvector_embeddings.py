@@ -100,5 +100,3 @@ def test_cosine_similarity_of_stored_embedding(db_cursor):
         f"Expected[:5] = {expected_embedding[:5]}\n"
         f"Actual[:5]   = {actual_embedding[:5]}"
     )
-
-    print(f"✅ Cosine similarity test passed. Similarity = {cosine_similarity:.6f}")
