@@ -5,21 +5,23 @@ services:
     image: ankane/pgvector:latest
     container_name: db
     ports:
-      - "${DB_PORT}:5432"
+      - "${DB_PORT}:5432"  # Maps host port 5433 to container port 5432
     restart: always
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}      # docker
+      POSTGRES_PASSWORD: ${DB_PASSWORD}  # docker
+      POSTGRES_DB: ${DB_NAME}        # db
     volumes:
+      - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/create_tables.sql
     env_file:
-    - .env
+      - .env
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "${DB_USER}", "-d", "${DB_NAME}"]
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U docker -d db"]
+      interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
   app:
     build:
@@ -37,7 +39,7 @@ services:
     volumes:
       - .:/app
     env_file:
-    - .env
+      - .env
     working_dir: /app
     command: ./entrypoint.sh
 
@@ -48,3 +50,7 @@ services:
       - db
     ports:
       - 8080:8080
+
+volumes:
+  postgres_data:
+    driver: local
