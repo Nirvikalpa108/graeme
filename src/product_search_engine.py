@@ -2,6 +2,18 @@ from dataclasses import dataclass
 from typing import Optional
 
 @dataclass
+class SearchResult:
+    product_id: int
+    product_name: str
+    product_brand: Optional[str]
+    gender: Optional[str]
+    price_inr: Optional[float]
+    num_images: Optional[int]
+    description: Optional[str]
+    primary_color: Optional[str]
+    similarity_score: float
+
+@dataclass
 class SearchFilters:
     min_price: Optional[int] = None
     max_price: Optional[int] = None
@@ -13,130 +25,92 @@ class ProductSearchEngine:
     def __init__(self, db_connection, embedding_model):
         self.db = db_connection
         self.model = embedding_model
-    
-    def search(self, query: str, top_k: int = 5):
-        # Step 1: Convert the query into an embedding
 
-        # It returns a numpy array where each row is an embedding for each input string
-        # Since we only passed one string, we get back an array with one embedding
-        # [0] extracts that first (and only) embedding from the array
+    from typing import Optional, List
+
+    def search(self, query: str, top_k: int = 5, filters: Optional[SearchFilters] = None) -> List[SearchResult]:
+        """
+        Orchestrate the product search process:
+        1. Convert the natural language query into an embedding vector.
+        2. Build the base SQL query joining products and embeddings.
+        3. Modify the query to include structured filters and prepare parameters.
+        4. Execute the query and fetch results.
+        5. Return the list of SearchResult objects.
+
+        Args:
+            query (str): The natural language search query.
+            top_k (int): Number of top results to return.
+            filters (Optional[SearchFilters]): Optional structured filters.
+
+        Returns:
+            List[SearchResult]: Ranked list of search results with similarity scores.
+        """
+        # Step 1: Convert query to embedding
         query_embedding = self.model.encode([query])[0]
 
-        # Step 2: Find similar products in the database
-        similar_products = self._search_database(query_embedding, top_k)
+        # Step 2: Build base SQL query joining products and embeddings
+        base_query = self._build_similarity_query(top_k)
 
-        # Step 3: Format and return results
-        pass
+        # Step 3: Build full query with filters and prepare parameters
+        filters_dict = filters.__dict__ if filters else None
+        full_query, params = self._build_query_with_filters_and_params(
+            base_query=base_query,
+            query_embedding=query_embedding,
+            top_k=top_k,
+            filters=filters_dict
+        )
 
-    def _search_database(self, query_embedding, top_k: int):
-        """
-        Execute the SQL query to find the top_k products whose embeddings are most similar
-        to the given query embedding using the pgvector cosine similarity operator <=>.
-        Returns raw product data along with similarity scores from the database.
-        """
-        pass
+        # Step 4: Execute the query
+        cursor = self._execute_query(full_query, params)
 
-    def _build_similarity_query(self, top_k: int) -> str:
-        """
-        Build the SQL query string that joins the products and product_embeddings tables,
-        and orders results by cosine similarity using the pgvector <=> operator.
-        
-        Args:
-            top_k: Number of top results to return
-        
-        Returns:
-            SQL query string with placeholders for parameters
-        """
-        pass
+        # Step 5: Fetch and return results
+        results = self._fetch_results(cursor)
+        return results
 
-    def _apply_structured_filters(self, base_query: str, filters: dict) -> str:
+    def _build_query_with_filters_and_params(
+    self,
+    base_query: str,
+    query_embedding: list,
+    top_k: int,
+    filters: Optional[dict] = None
+) -> Tuple[str, List]:
         """
-        Modify the base SQL query to include WHERE clauses for structured filters such as
-        price range, gender, brand, and color.
+        Modify the base SQL query to include WHERE clauses for structured filters,
+        and prepare the parameters list including the query embedding and top_k.
 
         Args:
-            base_query: The initial SQL query string before applying filters.
-            filters: A dictionary containing filter criteria, e.g.,
-                    {
-                    'min_price': int,
-                    'max_price': int,
-                    'gender': str,
-                    'brand': str,
-                    'color': str
-                    }
+            base_query (str): The initial SQL query string before applying filters.
+            query_embedding (list): The embedding vector for the query.
+            top_k (int): Number of top results to return.
+            filters (Optional[dict]): Dictionary of filter criteria (min_price, max_price, gender, brand, color).
 
         Returns:
-            The SQL query string with added WHERE conditions for the specified filters.
+            Tuple[str, List]: 
+                - Modified SQL query string with WHERE conditions and ordering.
+                - List of parameters to be passed to the database cursor execute method.
         """
-        pass
-
-    def _prepare_query_params(self, query_embedding, top_k: int) -> list:
-        """
-        Prepare the parameters list for the SQL query, including the query embedding
-        vector and the limit for top_k results.
         
-        Args:
-            query_embedding: The embedding vector for the query
-            top_k: Number of top results to return
-        
-        Returns:
-            List of parameters to be passed to the database cursor execute method
-        """
-        pass
-
-    def _get_product_details(self, product_id: int):
-        """
-        Perform a database lookup to retrieve full product details for the given product_id.
-        
-        Args:
-            product_id: The unique identifier of the product to retrieve.
-        
-        Returns:
-            A raw database row or structured object containing full product details.
-        """
-        pass
-
-    def _combine_with_similarity_scores(self, product_details, similarity_scores):
-        """
-        Combine product details with their corresponding similarity scores into a unified format.
-        
-        Args:
-            product_details: List or dict of product detail records.
-            similarity_scores: List or dict of similarity scores keyed by product_id or aligned by index.
-        
-        Returns:
-            A combined data structure (e.g., list of objects or dicts) that includes both product info and similarity scores.
-        """
-        pass
-
-    def _finalize_query(self, base_query: str, top_k: int) -> str:
-        """
-        Append ORDER BY clause to sort results by similarity score in descending order
-        and add a LIMIT clause to restrict the number of results to top_k.
-        
-        Args:
-            base_query: The base SQL query string before ordering and limiting
-            top_k: The maximum number of results to return
-        
-        Returns:
-            The finalized SQL query string with ordering and limit applied
-        """
-        pass
-
     def _execute_query(self, query: str, params: list):
         """
         Execute the given SQL query with parameters using the stored database connection.
 
+        This method runs the full search query that:
+        - Joins the products and product_embeddings tables
+        - Performs vector similarity search using the query embedding
+        - Applies structured filters (price, gender, brand, color)
+        - Orders results by similarity score
+        - Limits the results to the specified top_k
+
         Args:
-            query: The SQL query string to execute
-            params: List of parameters to pass to the query
+            query: The complete SQL query string to execute, including joins, filters, ordering, and limits
+            params: List of parameters to pass to the query, including the query embedding vector and filter values
 
         Returns:
-            Raw database cursor after executing the query
+            Raw database cursor after executing the query, which can be used to fetch the search results
         """
         pass
 
-    def _fetch_results(self, cursor):
+    def _fetch_results(self, cursor) -> List[SearchResult]:
         """
         Fetch all results from the executed query cursor and return them in a suitable format.
 
