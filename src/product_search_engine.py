@@ -68,12 +68,12 @@ class ProductSearchEngine:
         return results
 
     def _build_query_with_filters_and_params(
-    self,
-    base_query: str,
-    query_embedding: list,
-    top_k: int,
-    filters: Optional[dict] = None
-) -> Tuple[str, List]:
+        self,
+        base_query: str,
+        query_embedding: list,
+        top_k: int,
+        filters: Optional[dict] = None
+    ) -> Tuple[str, List]:
         """
         Modify the base SQL query to include WHERE clauses for structured filters,
         and prepare the parameters list including the query embedding and top_k.
@@ -89,6 +89,18 @@ class ProductSearchEngine:
                 - Modified SQL query string with WHERE conditions and ordering.
                 - List of parameters to be passed to the database cursor execute method.
         """
+        # Initialize the query and parameters list
+        query = base_query
+        params = []
+        
+        # Add query embedding to parameters
+        params.append(query_embedding)
+        
+        # Add top_k to parameters
+        params.append(top_k)
+        
+        # Return the tuple with query and parameters
+        return (query, params)
         
     def _execute_query(self, query: str, params: list):
         """
@@ -108,7 +120,14 @@ class ProductSearchEngine:
         Returns:
             Raw database cursor after executing the query, which can be used to fetch the search results
         """
-        pass
+        # Create a cursor from the database connection
+        cursor = self.db.cursor()
+        
+        # Execute the query with parameters
+        cursor.execute(query, params)
+        
+        # Return the cursor
+        return cursor
 
     def _fetch_results(self, cursor) -> List[SearchResult]:
         """
@@ -120,4 +139,8 @@ class ProductSearchEngine:
         Returns:
             List of raw result rows fetched from the database
         """
-        pass
+        # Fetch all rows from the cursor
+        rows = cursor.fetchall()
+        
+        # Return the rows as a list
+        return rows
