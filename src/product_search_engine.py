@@ -98,6 +98,24 @@ class ProductSearchEngine:
         
         # Add top_k to parameters
         params.append(top_k)
+
+        if filters:
+            query += " WHERE 1=1"
+            if 'min_price' in filters:
+                query += " AND price_inr >= %s"
+                params.append(filters['min_price'])
+            if 'max_price' in filters:
+                query += " AND price_inr <= %s"
+                params.append(filters['max_price'])
+            if 'gender' in filters:
+                query += " AND gender = %s"
+                params.append(filters['gender'])
+            if 'brand' in filters:
+                query += " AND product_brand = %s"
+                params.append(filters['brand'])
+            if 'color' in filters:
+                query += " AND primary_color = %s"
+                params.append(filters['color'])
         
         # Return the tuple with query and parameters
         return (query, params)
