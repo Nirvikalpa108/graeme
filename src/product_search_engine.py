@@ -160,5 +160,18 @@ class ProductSearchEngine:
         # Fetch all rows from the cursor
         rows = cursor.fetchall()
         
-        # Return the rows as a list
-        return rows
+        # Return the rows as a search result
+        return [
+        SearchResult(
+            product_id=row[0],
+            product_name=row[1],
+            product_brand=row[2],
+            gender=row[3],
+            price_inr=row[4],
+            num_images=row[5],
+            description=row[6],
+            primary_color=row[7],
+            similarity_score=row[8]
+        )
+        for row in rows
+        ]

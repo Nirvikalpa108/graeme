@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import Mock
-from src.product_search_engine import ProductSearchEngine
+from src.product_search_engine import ProductSearchEngine, SearchResult
 
 
 class TestProductSearchEngine(unittest.TestCase):
@@ -129,12 +129,8 @@ class TestProductSearchEngine(unittest.TestCase):
         mock_cursor.execute.assert_called_once_with(query, [])
         self.assertIsNotNone(result)
 
-    # next step - change the test so that it returns SearchResult objects
-    # It's the next logical step from "returns a list" to "returns a list of the right type"
-    # It's essential for the search() method to work correctly
-    # It validates the data mapping from database columns to the dataclass fields
-    def test_fetch_results_returns_list(self):
-        """Simplest test - verify _fetch_results returns a list."""
+    def test_fetch_results_returns_search_result_objects(self):
+        """Verify _fetch_results returns a list of SearchResult objects."""
         mock_cursor = Mock()
         mock_cursor.fetchall.return_value = [
             (1, "Red Shoes", "Nike", "Men", 2500.0, 5, "Stylish red shoes", "Red", 0.95)
@@ -144,6 +140,41 @@ class TestProductSearchEngine(unittest.TestCase):
 
         self.assertIsInstance(results, list)
         self.assertEqual(len(results), 1)
+        self.assertIsInstance(results[0], SearchResult)
+        self.assertEqual(results[0].product_id, 1)
+        self.assertEqual(results[0].product_name, "Red Shoes")
+        self.assertEqual(results[0].product_brand, "Nike")
+        self.assertEqual(results[0].gender, "Men")
+        self.assertEqual(results[0].price_inr, 2500.0)
+        self.assertEqual(results[0].num_images, 5)
+        self.assertEqual(results[0].description, "Stylish red shoes")
+        self.assertEqual(results[0].primary_color, "Red")
+        self.assertEqual(results[0].similarity_score, 0.95)
+    
+    def test_fetch_results_handles_multiple_results(self):
+        """Verify _fetch_results correctly processes multiple rows."""
+        mock_cursor = Mock()
+        mock_cursor.fetchall.return_value = [
+            (1, "Red Shoes", "Nike", "Men", 2500.0, 5, "Stylish red shoes", "Red", 0.95),
+            (2, "Blue Shirt", "Adidas", "Women", 1500.0, 3, "Comfortable shirt", "Blue", 0.85)
+        ]
+
+        results = self.search_engine._fetch_results(mock_cursor)
+
+        self.assertEqual(len(results), 2)
+        self.assertIsInstance(results[0], SearchResult)
+        self.assertIsInstance(results[1], SearchResult)
+        self.assertEqual(results[0].product_id, 1)
+        self.assertEqual(results[1].product_id, 2)
+    
+    def test_fetch_results_handles_empty_results(self):
+        """Verify _fetch_results returns empty list when no results found."""
+        mock_cursor = Mock()
+        mock_cursor.fetchall.return_value = []
+
+        results = self.search_engine._fetch_results(mock_cursor)
+
+        self.assertEqual(results, [])
 
 
 if __name__ == '__main__':
