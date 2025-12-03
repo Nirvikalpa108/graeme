@@ -155,7 +155,7 @@ class ProductSearchEngine:
             cursor: Database cursor after query execution
 
         Returns:
-            List of raw result rows fetched from the database
+            List of SearchResult objects with product data and similarity scores
         """
         # Fetch all rows from the cursor
         rows = cursor.fetchall()
