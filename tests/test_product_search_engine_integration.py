@@ -1,7 +1,5 @@
 import pytest
-
-def test_product_search_engine_placeholder():
-    pytest.skip("Integration test not implemented yet")
+from src.product_search_engine import ProductSearchEngine
 
 class StubEmbeddingModel:
     def encode(self, texts: list) -> list:
@@ -27,3 +25,13 @@ class FakeDBConnection:
 
     def commit(self):
         pass  # No-op for testing
+
+# pytest automatically calls the fixture and passes the results to each test
+@pytest.fixture
+def search_engine():
+    fake_db = FakeDBConnection()
+    stub_model = StubEmbeddingModel()
+    return ProductSearchEngine(fake_db, stub_model)
+
+def test_product_search_engine_placeholder():
+    pytest.skip("Integration test not implemented yet")
