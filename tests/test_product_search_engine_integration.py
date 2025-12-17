@@ -10,7 +10,11 @@ class StubEmbeddingModel:
 class FakeDBConnection:
     def __init__(self):
         self.executed_sql = []  # Records all SQL queries and params as tuples
-        self._results = []  # Mock data to return from fetchall()
+        self._results = [  # Mock product data: (id, name, brand, gender, price, num_images, description, color, similarity)
+            (1, "Blue Denim Jeans", "Levi's", "Men", 2999.0, 3, "Classic straight fit denim jeans", "Blue", 0.95),
+            (2, "Red Cotton T-Shirt", "Nike", "Women", 1499.0, 2, "Comfortable cotton t-shirt", "Red", 0.89),
+            (3, "Black Leather Jacket", "Zara", "Unisex", 5999.0, 4, "Premium leather jacket", "Black", 0.82),
+        ]
 
     def cursor(self):
         return self  # Returns itself as the cursor
