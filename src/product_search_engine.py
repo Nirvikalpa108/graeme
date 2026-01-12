@@ -67,6 +67,17 @@ class ProductSearchEngine:
         results = self._fetch_results(cursor)
         return results
 
+    def _build_similarity_query(self, top_k: int) -> str:
+        return """
+            SELECT p.id, p.product_name, p.product_brand, p.gender, p.price_inr, 
+                p.num_images, p.description, p.primary_color,
+                1 - (pe.embedding <=> %s) as similarity
+            FROM products p
+            JOIN product_embeddings pe ON p.id = pe.product_id
+            ORDER BY similarity DESC
+            LIMIT %s
+        """
+
     def _build_query_with_filters_and_params(
         self,
         base_query: str,

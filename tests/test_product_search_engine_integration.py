@@ -1,5 +1,5 @@
 import pytest
-from src.product_search_engine import ProductSearchEngine
+from src.product_search_engine import ProductSearchEngine, SearchFilters
 
 class StubEmbeddingModel:
     def encode(self, texts: list) -> list:
@@ -33,5 +33,10 @@ def search_engine():
     stub_model = StubEmbeddingModel()
     return ProductSearchEngine(fake_db, stub_model)
 
-def test_product_search_engine_placeholder():
-    pytest.skip("Integration test not implemented yet")
+def test_product_search_engine(search_engine):
+    # Call search() with a sample query, top_k, and SearchFilters to exercise the full pipeline.
+    results = search_engine.search(
+        query="blue jeans",
+        top_k=3,
+        filters=SearchFilters(min_price=1000, max_price=4000, gender="Men")
+    )
