@@ -34,9 +34,41 @@ def search_engine():
     return ProductSearchEngine(fake_db, stub_model)
 
 def test_product_search_engine(search_engine):
-    # Call search() with a sample query, top_k, and SearchFilters to exercise the full pipeline.
     results = search_engine.search(
         query="blue jeans",
         top_k=3,
         filters=SearchFilters(min_price=1000, max_price=4000, gender="Men")
     )
+    
+    assert len(results) == 3
+    assert results[0].product_name == "Blue Denim Jeans"
+    
+    fake_db = search_engine.db
+    assert len(fake_db.executed_sql) == 1
+    
+    executed_query, executed_params = fake_db.executed_sql[0]
+    
+    # Verify embedding and top_k are first two params
+    assert executed_params[0] == [0.1, 0.2, 0.3]
+    assert executed_params[1] == 3
+    
+    # Verify filter params 
+    assert 1000 in executed_params
+    assert 4000 in executed_params
+    assert "Men" in executed_params
+    
+    # Verify SQL structure
+    assert executed_query.count("WHERE") == 1
+    assert "price_inr >= %s" in executed_query
+    assert "price_inr <= %s" in executed_query
+    assert "gender = %s" in executed_query
+
+    # Add to existing assertions:
+    assert "ORDER BY similarity DESC" in executed_query
+    assert "LIMIT %s" in executed_query
+    assert "JOIN product_embeddings pe" in executed_query
+
+    # Verify all result fields
+    assert results[0].product_id == 1
+    assert results[0].price_inr == 2999.0
+    assert results[0].similarity_score == 0.95
