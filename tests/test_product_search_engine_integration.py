@@ -22,6 +22,9 @@ class FakeDBConnection:
     def commit(self):
         pass  # No-op for testing
 
+    def reset_executed_sql(self):
+        self.executed_sql = []
+
 def test_product_search_engine():
     fake_db = FakeDBConnection(results=[
         (1, "Blue Denim Jeans", "Levi's", "Men", 2999.0, 3, "Classic straight fit denim jeans", "Blue", 0.95),
