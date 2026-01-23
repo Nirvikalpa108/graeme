@@ -72,3 +72,26 @@ def test_product_search_engine():
     assert results[0].product_id == 1
     assert results[0].price_inr == 2999.0
     assert results[0].similarity_score == 0.95
+
+def test_none_values_not_included_in_params():
+    fake_db = FakeDBConnection(results=[
+        (1, "Blue Denim Jeans", "Levi's", "Men", 2999.0, 3, "Classic straight fit denim jeans", "Blue", 0.95),
+    ])
+    stub_model = StubEmbeddingModel()
+    search_engine = ProductSearchEngine(fake_db, stub_model)
+
+    search_engine.search(
+        query="blue jeans",
+        top_k=3,
+        filters=SearchFilters(min_price=1000, max_price=None, gender=None, brand=None, color=None)
+    )
+    
+    executed_query, executed_params = fake_db.executed_sql[0]
+    
+    assert None not in executed_params
+    assert 1000 in executed_params
+    assert "price_inr >= %s" in executed_query
+    assert "price_inr <= %s" not in executed_query
+    assert "gender = %s" not in executed_query
+    assert "product_brand = %s" not in executed_query
+    assert "primary_color = %s" not in executed_query
