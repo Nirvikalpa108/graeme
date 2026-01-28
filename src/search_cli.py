@@ -31,12 +31,12 @@ load_dotenv(".env.local")
 from sentence_transformers import SentenceTransformer
 from pgvector.psycopg2 import register_vector
 from utils import db_connection
-from product_search_engine import ProductSearchEngine, SearchResult
-from typing import List
+from product_search_engine import ProductSearchEngine, SearchResult, SearchFilters
+from typing import List, Optional
 
 def format_results(results: List[SearchResult]) -> str:
     if not results:
-        return "No results found."
+        return "No results found. Try a different search query."
     
     output = []
     for i, result in enumerate(results, 1):
@@ -44,6 +44,7 @@ def format_results(results: List[SearchResult]) -> str:
         output.append(f"   Brand: {result.product_brand or 'N/A'}")
         output.append(f"   Price: ₹{result.price_inr or 'N/A'}")
         output.append(f"   Color: {result.primary_color or 'N/A'}")
+        output.append(f"   Gender: {result.gender or 'N/A'}")
         output.append(f"   Similarity: {result.similarity_score:.3f}")
         if result.description:
             desc = result.description[:100] + "..." if len(result.description) > 100 else result.description
@@ -61,6 +62,26 @@ def validate_query(query: str) -> tuple[bool, str]:
         return False, "empty"
     
     return True, query
+
+def get_optional_input(prompt: str, default: str = "") -> str:
+    response = input(prompt).strip()
+    return response if response else default
+
+def get_filters() -> Optional[SearchFilters]:
+    print("\n--- Optional Filters (press Enter to skip) ---")
+    
+    min_price_str = get_optional_input("Min price (₹): ")
+    min_price = int(min_price_str) if min_price_str else None
+    
+    max_price_str = get_optional_input("Max price (₹): ")
+    max_price = int(max_price_str) if max_price_str else None
+    
+    if any([min_price, max_price]):
+        return SearchFilters(
+            min_price=min_price,
+            max_price=max_price
+        )
+    return None
 
 def main():
     print("🔍 Initializing Product Search Engine...")
@@ -91,11 +112,19 @@ def main():
                     print("⚠️  Please enter a search query.")
                     continue
             
+            filters = get_filters()
+            
             print(f"\n{'='*60}")
             print(f"Query: '{processed_query}'")
+            if filters:
+                print(f"Filters applied:")
+                if filters.min_price:
+                    print(f"  • Min price: ₹{filters.min_price}")
+                if filters.max_price:
+                    print(f"  • Max price: ₹{filters.max_price}")
             print(f"{'='*60}")
             
-            results = search_engine.search(processed_query, top_k=3)
+            results = search_engine.search(processed_query, top_k=3, filters=filters)
             print(format_results(results))
 
 if __name__ == "__main__":

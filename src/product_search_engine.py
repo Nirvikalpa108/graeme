@@ -74,8 +74,6 @@ class ProductSearchEngine:
                 1 - (pe.embedding <=> %s) as similarity
             FROM products p
             JOIN product_embeddings pe ON p.product_id = pe.product_id
-            ORDER BY similarity DESC
-            LIMIT %s
         """
 
     def _build_query_with_filters_and_params(
@@ -107,9 +105,6 @@ class ProductSearchEngine:
         # Add query embedding to parameters
         params.append(query_embedding)
         
-        # Add top_k to parameters
-        params.append(top_k)
-
         if filters:
             query += " WHERE 1=1"
             if filters.get('min_price'):
@@ -128,6 +123,9 @@ class ProductSearchEngine:
                 query += " AND primary_color = %s"
                 params.append(filters['color'])
         
+        query += " ORDER BY similarity DESC LIMIT %s"
+        params.append(top_k)
+    
         # Return the tuple with query and parameters
         return (query, params)
         
