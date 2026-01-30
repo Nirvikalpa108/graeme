@@ -71,10 +71,20 @@ def get_filters() -> Optional[SearchFilters]:
     print("\n--- Optional Filters (press Enter to skip) ---")
     
     min_price_str = get_optional_input("Min price (₹): ")
-    min_price = int(min_price_str) if min_price_str else None
+    min_price = None
+    if min_price_str:
+        try:
+            min_price = int(min_price_str)
+        except ValueError:
+            print("⚠️  Invalid min price. Skipping filter.")
     
     max_price_str = get_optional_input("Max price (₹): ")
-    max_price = int(max_price_str) if max_price_str else None
+    max_price = None
+    if max_price_str:
+        try:
+            max_price = int(max_price_str)
+        except ValueError:
+            print("⚠️  Invalid max price. Skipping filter.")
     
     if any([min_price, max_price]):
         return SearchFilters(
