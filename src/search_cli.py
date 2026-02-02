@@ -75,6 +75,9 @@ def get_filters() -> Optional[SearchFilters]:
     if min_price_str:
         try:
             min_price = int(min_price_str)
+            if min_price < 0:
+                print("⚠️  Min price cannot be negative. Skipping filter.")
+                min_price = None
         except ValueError:
             print("⚠️  Invalid min price. Skipping filter.")
     
@@ -83,8 +86,17 @@ def get_filters() -> Optional[SearchFilters]:
     if max_price_str:
         try:
             max_price = int(max_price_str)
+            if max_price < 0:
+                print("⚠️  Max price cannot be negative. Skipping filter.")
+                max_price = None
         except ValueError:
             print("⚠️  Invalid max price. Skipping filter.")
+    
+    if min_price is not None and max_price is not None:
+        if min_price > max_price:
+            print("⚠️  Min price cannot be greater than max price. Skipping price filters.")
+            min_price = None
+            max_price = None
     
     if any([min_price, max_price]):
         return SearchFilters(
