@@ -33,6 +33,7 @@ from pgvector.psycopg2 import register_vector
 from utils import db_connection
 from product_search_engine import ProductSearchEngine, SearchResult, SearchFilters
 from typing import List, Optional
+import psycopg2
 
 def format_results(results: List[SearchResult]) -> str:
     if not results:
@@ -117,37 +118,44 @@ def main():
 
     model = SentenceTransformer("all-MiniLM-L6-v2")
 
-    with db_connection() as conn:
-        register_vector(conn)
-        search_engine = ProductSearchEngine(conn, model)
-        
-        while True:
-            query = input("\nEnter search query: ")
+    try:
+        with db_connection() as conn:
+            register_vector(conn)
+            search_engine = ProductSearchEngine(conn, model)
             
-            is_valid, processed_query = validate_query(query)
-            
-            if not is_valid:
-                if processed_query == "exit":
-                    print("👋 Goodbye!")
-                    break
-                elif processed_query == "empty":
-                    print("⚠️  Please enter a search query.")
-                    continue
-            
-            filters = get_filters()
-            
-            print(f"\n{'='*60}")
-            print(f"Query: '{processed_query}'")
-            if filters:
-                print(f"Filters applied:")
-                if filters.min_price:
-                    print(f"  • Min price: ₹{filters.min_price}")
-                if filters.max_price:
-                    print(f"  • Max price: ₹{filters.max_price}")
-            print(f"{'='*60}")
-            
-            results = search_engine.search(processed_query, top_k=3, filters=filters)
-            print(format_results(results))
+            while True:
+                query = input("\nEnter search query: ")
+                
+                is_valid, processed_query = validate_query(query)
+                
+                if not is_valid:
+                    if processed_query == "exit":
+                        print("👋 Goodbye!")
+                        break
+                    elif processed_query == "empty":
+                        print("⚠️  Please enter a search query.")
+                        continue
+                
+                filters = get_filters()
+                
+                print(f"\n{'='*60}")
+                print(f"Query: '{processed_query}'")
+                if filters:
+                    print(f"Filters applied:")
+                    if filters.min_price:
+                        print(f"  • Min price: ₹{filters.min_price}")
+                    if filters.max_price:
+                        print(f"  • Max price: ₹{filters.max_price}")
+                print(f"{'='*60}")
+                
+                results = search_engine.search(processed_query, top_k=3, filters=filters)
+                print(format_results(results))
+    except psycopg2.OperationalError as e:
+        print(f"❌ Database connection failed: {e}")
+        print("\nMake sure Docker containers are running:")
+        print("  docker-compose up -d")
+    except Exception as e:
+        print(f"❌ An error occurred: {e}")
 
 if __name__ == "__main__":
     main()
