@@ -4,3 +4,4 @@ pytest
 python-dotenv
 sentence-transformers
 pgvector
+streamlit
