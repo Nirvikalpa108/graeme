@@ -21,8 +21,16 @@ from dotenv import load_dotenv
 
 load_dotenv(".env.local")
 
+@st.cache_resource
+def load_model():
+    """Load and cache the embedding model."""
+    return SentenceTransformer("all-MiniLM-L6-v2")
+
 
 def main():
+    #initialise model at app start
+    model = load_model()
+    
     st.set_page_config(
         page_title="Product Search",
         page_icon="🔍",
