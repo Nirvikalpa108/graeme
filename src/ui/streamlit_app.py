@@ -18,6 +18,7 @@ Usage:
 
 import streamlit as st
 from dotenv import load_dotenv
+from sentence_transformers import SentenceTransformer
 
 load_dotenv(".env.local")
 
@@ -46,6 +47,14 @@ def main():
         placeholder="e.g., red dress for summer, casual shoes for men...",
         key="search_query"
     )
+
+    # Search button
+    if st.button("🔍 Search", type="primary"):
+        if query.strip():
+            # Trigger search logic here
+            st.success(f"Searching for: {query}")
+        else:
+            st.warning("Please enter a search query")
 
 
 if __name__ == "__main__":
