@@ -108,3 +108,12 @@ To re-run tests inside Docker:
 This stops all containers and deletes volumes (DB data).
 
 `docker-compose down -v`
+
+### Run the Streamlit UI
+
+```bash
+source venv/bin/activate
+pip install -r requirements.txt
+docker-compose up -d
+streamlit run src/ui/streamlit_app.py
+```
