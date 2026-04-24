@@ -117,3 +117,35 @@ pip install -r requirements.txt
 docker-compose up -d
 streamlit run src/ui/streamlit_app.py
 ```
+
+### Run the Production Docker Compose Locally
+
+The prod compose (`docker-compose.prod.yaml`) runs only the Streamlit app and expects a remote/cloud database — the DB connection comes entirely from environment variables.
+
+**Step 1 — Create a `.env.prod` file**
+
+```
+DB_HOST=<your-prod-db-host>
+DB_USER=<your-prod-db-user>
+DB_PASSWORD=<your-prod-db-password>
+DB_NAME=<your-prod-db-name>
+DB_PORT=5432
+```
+
+> If you don't have a remote DB yet and want to test the prod compose locally, run `docker-compose up -d db` first (using the dev compose), then set `DB_HOST=host.docker.internal` in `.env.prod`.
+
+**Step 2 — Run the prod compose**
+
+```bash
+docker compose -f docker-compose.prod.yaml --env-file .env.prod up --build
+```
+
+**Step 3 — Open the app**
+
+Navigate to http://localhost:8501 in your browser.
+
+**To stop:**
+
+```bash
+docker compose -f docker-compose.prod.yaml down
+```
