@@ -90,6 +90,20 @@ git clone https://github.com/Nirvikalpa108/graeme
 cd graeme
 ```
 
+### Create a `.env` file
+
+Before running Docker, create a `.env` file in the project root with your database credentials:
+
+```
+DB_NAME=db
+DB_USER=docker
+DB_PASSWORD=docker
+DB_HOST=localhost
+DB_PORT=5433
+```
+
+This file is required by `docker-compose.yaml` and by `src/utils.py` to connect to the database.
+
 ### Start the Pipeline with Docker
 `docker-compose up --build`
 

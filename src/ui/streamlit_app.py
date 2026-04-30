@@ -20,7 +20,7 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from dotenv import load_dotenv
-load_dotenv(".env.streamlit")
+load_dotenv(".env.local")
 
 import streamlit as st
 from sentence_transformers import SentenceTransformer
