@@ -60,7 +60,7 @@ def test_generate_embedding_from_db_description(db_cursor):
     product_id, description = row
     assert description is not None and len(description) > 0, "Description is empty"
 
-    model = SentenceTransformer("all-MiniLM-L6-v2")
+    model = SentenceTransformer("/app/models/snapshots/c9745ed1d9f207416be6d2e6f8de32d1f16199bf")
     embedding = model.encode(description)
 
     assert isinstance(embedding, np.ndarray), "Embedding is not a NumPy array"
@@ -79,7 +79,7 @@ def test_cosine_similarity_of_stored_embedding(db_cursor):
         "Warranty: 5 yearsWarranty provided by Brand Owner / Manufacturer"
     )
 
-    model = SentenceTransformer("all-MiniLM-L6-v2")
+    model = SentenceTransformer("/app/models/snapshots/c9745ed1d9f207416be6d2e6f8de32d1f16199bf")
     expected_embedding = model.encode(description)
 
     cur.execute("SELECT embedding FROM product_embeddings WHERE product_id = %s;", (product_id,))

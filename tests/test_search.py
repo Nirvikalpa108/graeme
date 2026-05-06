@@ -46,7 +46,12 @@ class TestProductSearchEngine(unittest.TestCase):
         self.assertIn('Men', params)
         self.assertIn('Nike', params)
         self.assertIn('Red', params)
-        self.assertEqual(query.count('%s'), len(params) - 2)
+        self.assertIn('price_inr >= %s', query)
+        self.assertIn('price_inr <= %s', query)
+        self.assertIn('gender = %s', query)
+        self.assertIn('product_brand = %s', query)
+        self.assertIn('primary_color = %s', query)
+        self.assertEqual(len(params), 7)  # embedding + 5 filters + top_k
 
     def test_build_query_with_partial_filters(self):
         """Test that _build_query_with_filters_and_params works with partial filters."""

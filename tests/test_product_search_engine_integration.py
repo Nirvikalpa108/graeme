@@ -48,9 +48,10 @@ def test_product_search_engine():
     
     executed_query, executed_params = fake_db.executed_sql[0]
     
-    # Verify embedding and top_k are first two params
+    # Verify embedding is first param and top_k is parameterised
     assert executed_params[0] == [0.1, 0.2, 0.3]
-    assert executed_params[1] == 3
+    assert 3 in executed_params
+    assert "LIMIT %s" in executed_query
     
     # Verify filter params 
     assert 1000 in executed_params

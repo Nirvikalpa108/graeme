@@ -8,7 +8,7 @@ print("🚀 Starting full DB embedding...")
 start_time = time.time()
 
 # Load model
-model = SentenceTransformer("/app/models")
+model = SentenceTransformer("/app/models/snapshots/c9745ed1d9f207416be6d2e6f8de32d1f16199bf")
 
 with db_connection() as conn:
     register_vector(conn)
