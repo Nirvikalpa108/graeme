@@ -43,6 +43,28 @@ services:
     working_dir: /app
     command: ./entrypoint.sh
 
+  streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      DB_PORT: 5432
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    working_dir: /app
+    ports:
+      - "8501:8501"
+    command: streamlit run src/ui/streamlit_app.py --server.address=0.0.0.0
+
   adminer:
     image: adminer:latest
     restart: always

@@ -67,7 +67,7 @@ User enters: `"Red formal shoes under INR 3000"`
 - ✅ Fully containerized with Docker + docker-compose
 - ✅ Logs and timing metrics for observability
 - ✅ Spot-check tests for embedding quality (cosine similarity)
-- 🔜 API and/or CLI interface for interactive queries
+- ✅ Streamlit UI for interactive natural language search
 - 🔜 Cloud deployment with AWS/GCP
 
 ---
@@ -77,6 +77,7 @@ User enters: `"Red formal shoes under INR 3000"`
 - **Python 3.11**
 - **PostgreSQL 17 + pgvector**
 - **Pandas, SentenceTransformers, NumPy**
+- **Streamlit**
 - **Docker & Docker Compose**
 - **pytest**
 ---
@@ -126,11 +127,10 @@ This stops all containers and deletes volumes (DB data).
 ### Run the Streamlit UI
 
 ```bash
-source venv/bin/activate
-pip install -r requirements.txt
-docker-compose up -d
-streamlit run src/ui/streamlit_app.py
+docker-compose up --build
 ```
+
+Then open http://localhost:8501 in your browser.
 
 ### Run the Production Docker Compose Locally
 

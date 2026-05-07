@@ -33,7 +33,7 @@ from product_search_engine import SearchFilters
 @st.cache_resource
 def load_model():
     """Load and cache the embedding model."""
-    return SentenceTransformer("all-MiniLM-L6-v2")
+    return SentenceTransformer("/app/models/snapshots/c9745ed1d9f207416be6d2e6f8de32d1f16199bf")
 
 @st.cache_resource
 def get_db_connection():
