@@ -119,11 +119,6 @@ To re-run tests inside Docker:
 
 `docker-compose run --rm app pytest`
 
-### Stop & Clean Up
-This stops all containers and deletes volumes (DB data).
-
-`docker-compose down -v`
-
 ### Run the Streamlit UI
 
 ```bash
@@ -131,6 +126,11 @@ docker-compose up --build
 ```
 
 Then open http://localhost:8501 in your browser.
+
+### Stop & Clean Up
+This stops all containers and deletes volumes (DB data).
+
+`docker-compose down -v`
 
 ### Run the Production Docker Compose Locally
 

@@ -65,7 +65,7 @@ services:
     working_dir: /app
     ports:
       - "8501:8501"
-    command: streamlit run src/ui/streamlit_app.py --server.address=0.0.0.0
+    command: streamlit run src/ui/streamlit_app.py --server.address=0.0.0.0 --server.fileWatcherType none
 
   adminer:
     image: adminer:latest
