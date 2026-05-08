@@ -139,10 +139,10 @@ The prod compose (`docker-compose.prod.yaml`) runs only the Streamlit app and ex
 **Step 1 — Create a `.env.prod` file**
 
 ```
-DB_HOST=<your-prod-db-host>
+DB_NAME=<your-prod-db-name>
 DB_USER=<your-prod-db-user>
 DB_PASSWORD=<your-prod-db-password>
-DB_NAME=<your-prod-db-name>
+DB_HOST=<your-prod-db-host>
 DB_PORT=5432
 ```
 
