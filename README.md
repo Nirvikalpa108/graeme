@@ -144,6 +144,7 @@ DB_USER=<your-prod-db-user>
 DB_PASSWORD=<your-prod-db-password>
 DB_HOST=<your-prod-db-host>
 DB_PORT=5432
+DB_SSLMODE=require
 ```
 
 > If you don't have a remote DB yet and want to test the prod compose locally, run `docker-compose up -d db` first (using the dev compose), then set `DB_HOST=host.docker.internal` in `.env.prod`.

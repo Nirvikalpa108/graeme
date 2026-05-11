@@ -13,4 +13,5 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
       DB_PORT: ${DB_PORT}
+      DB_SSLMODE: ${DB_SSLMODE}
     command: streamlit run src/ui/streamlit_app.py --server.port=8501 --server.address=0.0.0.0 --server.fileWatcherType none

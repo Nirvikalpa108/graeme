@@ -37,13 +37,16 @@ def load_model():
 
 @st.cache_resource
 def get_db_connection():
-    conn = psycopg2.connect(
+    conn_kwargs = dict(
         dbname=os.getenv("DB_NAME"),
         user=os.getenv("DB_USER"),
         password=os.getenv("DB_PASSWORD"),
         host=os.getenv("DB_HOST"),
         port=int(os.getenv("DB_PORT", 5432))
     )
+    if sslmode := os.getenv("DB_SSLMODE"):
+        conn_kwargs["sslmode"] = sslmode
+    conn = psycopg2.connect(**conn_kwargs)
     register_vector(conn)
     return conn
 
