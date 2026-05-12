@@ -3,12 +3,13 @@ from psycopg2.extras import execute_batch
 from pgvector.psycopg2 import register_vector
 from sentence_transformers import SentenceTransformer
 from utils import db_connection
+from config import MODEL_PATH
 
 print("🚀 Starting full DB embedding...")
 start_time = time.time()
 
 # Load model
-model = SentenceTransformer("/app/models/snapshots/c9745ed1d9f207416be6d2e6f8de32d1f16199bf")
+model = SentenceTransformer(MODEL_PATH)
 
 with db_connection() as conn:
     register_vector(conn)

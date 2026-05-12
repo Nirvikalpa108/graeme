@@ -28,12 +28,13 @@ from pgvector.psycopg2 import register_vector
 import psycopg2
 from product_search_engine import ProductSearchEngine
 from product_search_engine import SearchFilters
+from config import MODEL_PATH
 
 
 @st.cache_resource
 def load_model():
     """Load and cache the embedding model."""
-    return SentenceTransformer("/app/models/snapshots/c9745ed1d9f207416be6d2e6f8de32d1f16199bf")
+    return SentenceTransformer(MODEL_PATH)
 
 @st.cache_resource
 def get_db_connection():
