@@ -14,9 +14,10 @@ time.sleep(5)
 df = clean_raw_csv("data/myntra_products_catalog.csv")
 print(f"✅ Loaded CSV with {len(df)} rows")
 
+total = len(df)
 with db_connection() as conn:
     with conn.cursor() as cursor:
-        for _, row in df.iterrows():
+        for i, (_, row) in enumerate(df.iterrows(), start=1):
             cursor.execute("""
                 INSERT INTO products (
                     product_id, product_name, product_brand,
@@ -33,5 +34,7 @@ with db_connection() as conn:
                 row.description,
                 row.primary_color
             ))
+            if i % 1000 == 0 or i == total:
+                print(f"⏳ Inserted {i}/{total} rows...")
         conn.commit()
 print("✅ Finished inserting rows into Postgres")
