@@ -68,7 +68,7 @@ User enters: `"Red formal shoes under INR 3000"`
 - ✅ Logs and timing metrics for observability
 - ✅ Spot-check tests for embedding quality (cosine similarity)
 - ✅ Streamlit UI for interactive natural language search
-- 🔜 Cloud deployment with AWS/GCP
+- ✅ Cloud deployment with GCP Cloud Run
 
 ---
 
@@ -132,9 +132,9 @@ This stops all containers and deletes volumes (DB data).
 
 `docker-compose down -v`
 
-### Run the Production Docker Compose Locally
+### Populate the Neon DB (run the pipeline against the cloud DB)
 
-The prod compose (`docker-compose.prod.yaml`) runs only the Streamlit app and expects a remote/cloud database — the DB connection comes entirely from environment variables.
+The pipeline compose (`docker-compose.pipeline.yaml`) runs the data loading and embedding pipeline against the Neon cloud DB. Run this when you need to populate or refresh the Neon DB. The DB connection comes entirely from environment variables.
 
 **Step 1 — Create a `.env.prod` file**
 
@@ -149,18 +149,109 @@ DB_SSLMODE=require
 
 > If you don't have a remote DB yet and want to test the prod compose locally, run `docker-compose up -d db` first (using the dev compose), then set `DB_HOST=host.docker.internal` in `.env.prod`.
 
-**Step 2 — Run the prod compose**
+**Step 2 — Run the pipeline compose**
 
 ```bash
-docker compose -f docker-compose.prod.yaml --env-file .env.prod up --build
+docker compose -f docker-compose.pipeline.yaml --env-file .env.prod up --build
 ```
-
-**Step 3 — Open the app**
-
-Navigate to http://localhost:8501 in your browser.
 
 **To stop:**
 
 ```bash
-docker compose -f docker-compose.prod.yaml down
+docker compose -f docker-compose.pipeline.yaml down
 ```
+
+---
+
+### Deploy to GCP Cloud Run
+
+GCP hosts two things for this project:
+
+- **Cloud Run Job** — runs the data pipeline once to populate Neon (uses `Dockerfile.pipeline`)
+- **Cloud Run Service** — serves the Streamlit UI (uses `Dockerfile.streamlit`)
+
+The reason there are two Dockerfiles is that a Docker image can only have one default command. The pipeline runs `entrypoint.sh`; the Streamlit UI runs `streamlit run ...`. Splitting them means each image does exactly one thing with no overrides needed.
+
+**Prerequisites**
+- [Install the gcloud CLI](https://cloud.google.com/sdk/docs/install) and run `gcloud auth login`
+- Create a GCP project and enable billing
+- Enable the required APIs:
+
+```bash
+gcloud services enable run.googleapis.com artifactregistry.googleapis.com
+```
+
+**Step 1 — Create an Artifact Registry repository**
+
+This is GCP's private Docker image store — equivalent to Docker Hub but within your GCP project.
+
+```bash
+gcloud artifacts repositories create graeme --repository-format=docker --location=europe-west2
+```
+
+**Step 2 — Authenticate Docker with GCP**
+
+```bash
+gcloud auth configure-docker europe-west2-docker.pkg.dev
+```
+
+**Step 3 — Store DB secrets in GCP Secret Manager**
+
+```bash
+echo -n "<your-db-host>" | gcloud secrets create DB_HOST --data-file=-
+echo -n "<your-db-user>" | gcloud secrets create DB_USER --data-file=-
+echo -n "<your-db-password>" | gcloud secrets create DB_PASSWORD --data-file=-
+echo -n "<your-db-name>" | gcloud secrets create DB_NAME --data-file=-
+```
+
+**Step 4 — Build and push the pipeline image**
+
+```bash
+docker build -f Dockerfile.pipeline -t europe-west2-docker.pkg.dev/<your-project>/graeme/pipeline:latest .
+docker push europe-west2-docker.pkg.dev/<your-project>/graeme/pipeline:latest
+```
+
+**Step 5 — Create and run the Cloud Run Job to populate Neon**
+
+A Cloud Run Job runs a container to completion and exits — perfect for a one-off pipeline. Run this once to populate Neon, and again any time the data needs refreshing.
+
+```bash
+gcloud run jobs create graeme-pipeline \
+  --image europe-west2-docker.pkg.dev/<your-project>/graeme/pipeline:latest \
+  --region europe-west2 \
+  --memory=1Gi \
+  --set-secrets="DB_HOST=DB_HOST:latest,DB_USER=DB_USER:latest,DB_PASSWORD=DB_PASSWORD:latest,DB_NAME=DB_NAME:latest" \
+  --set-env-vars="DB_SSLMODE=require,DB_PORT=5432"
+
+gcloud run jobs execute graeme-pipeline --region europe-west2 --wait
+```
+
+**Step 6 — Build and push the Streamlit image**
+
+This uses `Dockerfile.streamlit`, which sets `streamlit run` as its default command.
+
+```bash
+docker build -f Dockerfile.streamlit -t europe-west2-docker.pkg.dev/<your-project>/graeme/streamlit:latest .
+docker push europe-west2-docker.pkg.dev/<your-project>/graeme/streamlit:latest
+```
+
+**Step 7 — Deploy the Streamlit UI as a Cloud Run Service**
+
+Cloud Run pulls the image from Artifact Registry, injects the secrets as environment variables, and starts the container. The Streamlit UI is then publicly accessible via the URL Cloud Run provides.
+
+```bash
+gcloud run deploy graeme-streamlit \
+  --image europe-west2-docker.pkg.dev/<your-project>/graeme/streamlit:latest \
+  --platform managed \
+  --region europe-west2 \
+  --port 8501 \
+  --max-instances=1 \
+  --memory=512Mi \
+  --allow-unauthenticated \
+  --set-secrets="DB_HOST=DB_HOST:latest,DB_USER=DB_USER:latest,DB_PASSWORD=DB_PASSWORD:latest,DB_NAME=DB_NAME:latest" \
+  --set-env-vars="DB_SSLMODE=require,DB_PORT=5432"
+```
+
+**Step 8 — Open the app**
+
+Cloud Run will print a public HTTPS URL when the deploy completes. Open it in your browser.

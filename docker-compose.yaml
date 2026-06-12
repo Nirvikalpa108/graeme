@@ -26,7 +26,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.pipeline
     depends_on:
       db:
         condition: service_healthy
@@ -46,7 +46,7 @@ services:
   streamlit:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.streamlit
     depends_on:
       db:
         condition: service_healthy
