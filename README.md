@@ -207,7 +207,7 @@ echo -n "<your-db-name>" | gcloud secrets create DB_NAME --data-file=-
 **Step 4 — Build and push the pipeline image**
 
 ```bash
-docker build -f Dockerfile.pipeline -t europe-west2-docker.pkg.dev/<your-project>/graeme/pipeline:latest .
+docker build --platform linux/amd64 -f Dockerfile.pipeline -t europe-west2-docker.pkg.dev/<your-project>/graeme/pipeline:latest .
 docker push europe-west2-docker.pkg.dev/<your-project>/graeme/pipeline:latest
 ```
 
@@ -231,7 +231,7 @@ gcloud run jobs execute graeme-pipeline --region europe-west2 --wait
 This uses `Dockerfile.streamlit`, which sets `streamlit run` as its default command.
 
 ```bash
-docker build -f Dockerfile.streamlit -t europe-west2-docker.pkg.dev/<your-project>/graeme/streamlit:latest .
+docker build --platform linux/amd64 -f Dockerfile.streamlit -t europe-west2-docker.pkg.dev/<your-project>/graeme/streamlit:latest .
 docker push europe-west2-docker.pkg.dev/<your-project>/graeme/streamlit:latest
 ```
 
