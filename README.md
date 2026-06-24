@@ -249,7 +249,7 @@ gcloud run deploy graeme-streamlit \
   --memory=512Mi \
   --allow-unauthenticated \
   --set-secrets="DB_HOST=DB_HOST:latest,DB_USER=DB_USER:latest,DB_PASSWORD=DB_PASSWORD:latest,DB_NAME=DB_NAME:latest" \
-  --set-env-vars="DB_SSLMODE=require,DB_PORT=5432"
+  --set-env-vars="DB_SSLMODE=require,TOKENIZERS_PARALLELISM=false"
 ```
 
 **Step 8 — Open the app**
