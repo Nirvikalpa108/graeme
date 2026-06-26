@@ -2,6 +2,6 @@ pandas
 psycopg2-binary
 pytest
 python-dotenv
-sentence-transformers
+sentence-transformers==2.7.0
 pgvector
 streamlit
